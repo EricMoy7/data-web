@@ -21,8 +21,8 @@ pub struct CardDetailsApi {
     pub rms_session_id: String
 }
 
-#[derive(Deserialize, Serialize)]
-#[serde(rename_all (serialize = "camelCase", deserialize = "snake_case"))]
+#[derive(Deserialize, Serialize, Debug)]
+#[serde(rename_all (serialize = "camelCase", deserialize = "camelCase"))]
 pub struct TransactionQuery {
     pub page_index: i32,
     pub item_per_page: i32,
