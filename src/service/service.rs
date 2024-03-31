@@ -114,13 +114,8 @@ async fn update_cards(
                         // .as_f64()
                     )
                     .bind(card.card_number.to_string());
-                    // .execute(&db.pool)
-                    // .await;
-
-                // println!("{:#?}", query);
 
                 query.execute(&db.pool).await.expect("One of the queries broke");
-                // println!("{:#?}", res);
                 success_count += 1;
             }
             format!("Successes: {} \n Errors: {}", success_count, error_count).to_string().into_response()
