@@ -1,8 +1,22 @@
 use serde::{Deserialize, Serialize};
 
+// Transaction Query
 #[derive(Deserialize, Serialize, Debug)]
 #[serde(rename_all = "camelCase")]
-pub struct Transaction {
+pub struct TransactionQuery {
+    pub page_index: i32,
+    pub item_per_page: i32,
+    pub end_date: String,
+    pub start_date: String,
+    pub preferred_language: String,
+    pub rms_session_id: Option<String>
+}
+
+
+// Transaction Response
+#[derive(Deserialize, Serialize, Debug)]
+#[serde(rename_all = "camelCase")]
+pub struct TransactionResponse {
     balances: Balances,
     ending_item_index: i32,
     number_of_items_in_page: i32,
@@ -45,4 +59,3 @@ struct Detail {
     settlement_currency: String,
     transaction_desctription: String
 }
-

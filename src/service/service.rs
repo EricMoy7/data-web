@@ -1,23 +1,38 @@
+use async_graphql::{http::GraphiQLSource, EmptyMutation, EmptySubscription, Object, Schema};
+use async_graphql_axum::GraphQL;
 use axum::{
-    extract::State,http::HeaderMap, response::{IntoResponse, Response}, routing::{get, post}, Json, Router
+    extract::State,http::HeaderMap, response::{Html, IntoResponse, Response}, routing::{get, post}, Json, Router
 };
 
-use crate::blackhawk::
-    {   database::DbConfig, 
-        structures::{CardDetailsDb, TransactionQuery}, 
-        visa_queries::{get_balance, get_transactions}, 
-        query_structs::transactions::Transaction
-    };
+use crate::blackhawk_models::{card_summary::{api::get_balance, structs::{CardDetailsRequest, CardDetailsDb}}, 
+transactions::{api::get_transactions, structs::{TransactionQuery, TransactionResponse}}};
 
+use super::database::DbConfig;
 use sqlx;
+
+async fn graphiql() -> impl IntoResponse {
+    Html(GraphiQLSource::build().finish())
+}
+
+struct Query;
+
+#[Object]
+impl Query {
+    async fn hello(&self) -> &'static str {
+        "Hello, world!"
+    }
+}
 
 pub async fn api() {
 
+    let graph_schema = Schema::build(Query, EmptyMutation, EmptySubscription)
+        .finish();
+    
     let db_config = DbConfig::new("postgres://postgres:12345@localhost:5432/postgres".to_string()).await;
     // build our application with a route
     let app = Router::new()
         // `GET /` goes to `root` 
-        .route("/", get(root))
+        .route("/", get(graphiql).post_service(GraphQL::new(graph_schema)))
 
         .route("/newCard", post(create_card))
 
@@ -102,7 +117,7 @@ async fn update_cards(
         Ok(cards) => {
             for card in cards {
                 
-                let res = get_balance(card.clone()).await.unwrap();
+                let res = get_balance(&card.clone().into()).await.unwrap();
 
                 // batch.push(serde_json::from_value(res.clone()).unwrap());
                 let query = sqlx::query("UPDATE prepaid_cards SET current_amount = $1 WHERE card_number = $2")
@@ -161,13 +176,14 @@ async fn update_transactions(
     let mut error_count: i32 = 0;
     let mut success_count: i32 = 0;
 
+    
 
     match db_res {
         Ok(cards) => {
             for card in cards {
-
+                
                 // The process involves calling get_balance to aquire the token necessary for transaction data
-                let balance_sum_res = get_balance(card.clone()).await;
+                let balance_sum_res = get_balance(&card.clone().into()).await;
                 let balance_sum = balance_sum_res.unwrap();
                 let access_token = balance_sum.get("access_token").unwrap();
                 let token = access_token.as_str().unwrap();
@@ -176,7 +192,7 @@ async fn update_transactions(
                 let res = get_transactions(&payload, &token).await.unwrap(); 
 
                 let trans_details= res.get("result").unwrap();
-                let trans_struct: Transaction  = serde_json::from_value(trans_details.clone()).unwrap();
+                let trans_struct: TransactionResponse  = serde_json::from_value(trans_details.clone()).unwrap();
                 let trans_vec = trans_struct.transactions;
 
                 println!("{:#?}", trans_vec);

@@ -27,7 +27,7 @@ impl DbConfig {
         Ok(())
     }
 
-    pub async fn write_cc_info(&self, card_details: &super::structures::CardDetailsDb) -> Result<(), Error> {
+    pub async fn write_cc_info(&self, card_details: &super::super::blackhawk_models::card_summary::structs::CardDetailsDb) -> Result<(), Error> {
         let query: &str = "INSERT INTO prepaid_cards (card_number, expiration_month, expiration_year, security_code) VALUES ($1, $2, $3, $4)";
 
         sqlx::query(query)

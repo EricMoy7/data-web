@@ -1,4 +1,4 @@
-mod blackhawk;
+mod blackhawk_models;
 mod service;
 
 #[tokio::main]
