@@ -1,14 +1,14 @@
-use async_graphql::{http::GraphiQLSource, EmptyMutation, EmptySubscription, Object, Schema};
+use async_graphql::{http::GraphiQLSource, EmptyMutation, EmptySubscription, Object, Schema, Context};
 use async_graphql_axum::GraphQL;
 use axum::{
     extract::State,http::HeaderMap, response::{Html, IntoResponse, Response}, routing::{get, post}, Json, Router
 };
 
-use crate::blackhawk_models::{card_summary::{api::get_balance, structs::{CardDetailsRequest, CardDetailsDb}}, 
+use crate::blackhawk_models::{card_summary::{api::get_balance, structs::CardDetailsDb}, 
 transactions::{api::get_transactions, structs::{TransactionQuery, TransactionResponse}}};
 
 use super::database::DbConfig;
-use sqlx;
+use sqlx::{self, PgPool};
 
 async fn graphiql() -> impl IntoResponse {
     Html(GraphiQLSource::build().finish())
@@ -18,17 +18,31 @@ struct Query;
 
 #[Object]
 impl Query {
-    async fn hello(&self) -> &'static str {
-        "Hello, world!"
+    async fn card_details(&self, ctx: &Context<'_>, card_number: String) -> sqlx::Result<CardDetailsDb> {
+        let pool = ctx.data::<PgPool>().expect("Could not get PostgreSQL pool");
+        let card_details = sqlx::query_as!(CardDetailsDb, "SELECT * FROM prepaid_cards WHERE card_number = $1", card_number)
+            .fetch_one(pool)
+            .await?;
+        Ok(card_details)
+    }
+
+    async fn all_card_details(&self, ctx: &Context<'_>) -> sqlx::Result<Vec<CardDetailsDb>> {
+        let pool = ctx.data::<PgPool>().expect("Could not get PostgreSQL pool");
+        let all_card_details = sqlx::query_as!(CardDetailsDb, "SELECT * FROM prepaid_cards")
+            .fetch_all(pool)
+            .await?;
+        Ok(all_card_details)
     }
 }
 
 pub async fn api() {
-
+    let db_config = DbConfig::new("postgres://postgres:12345@localhost:5432/postgres".to_string()).await;
+    let pool = db_config.pool.clone();
     let graph_schema = Schema::build(Query, EmptyMutation, EmptySubscription)
+        .data(pool)
         .finish();
     
-    let db_config = DbConfig::new("postgres://postgres:12345@localhost:5432/postgres".to_string()).await;
+
     // build our application with a route
     let app = Router::new()
         // `GET /` goes to `root` 
