@@ -34,11 +34,11 @@ pub struct CardDetailsDb {
 impl CardDetailsDb {
     // define methods for each field you want to expose in your GraphQL API
     // for example, if CardDetailsDb has a field named `card_id`, you might do:
-    async fn card_number(&self, ctx: &Context<'_>) -> String {
+    async fn card_number(&self, _ctx: &Context<'_>) -> String {
         self.card_number.chars().rev().take(4).collect::<String>().chars().rev().collect()
     }
 
-    async fn current_amount(&self, ctx: &Context<'_>) -> f64 {
+    async fn current_amount(&self, _ctx: &Context<'_>) -> f64 {
         self.current_amount.expect("This is not a number")
     }
 

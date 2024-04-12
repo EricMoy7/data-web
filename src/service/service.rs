@@ -123,8 +123,8 @@ async fn update_cards(
         
 
 
-    let mut batch: Vec<CardDetailsDb> = Vec::new();
-    let mut error_count: i32 = 0;
+    let _batch: Vec<CardDetailsDb> = Vec::new();
+    let error_count: i32 = 0;
     let mut success_count: i32 = 0;
 
     match db_res {
@@ -186,9 +186,9 @@ async fn update_transactions(
         return "Headers are empty for request!".into_response()
     }
 
-    let mut batch: Vec<CardDetailsDb> = Vec::new();
-    let mut error_count: i32 = 0;
-    let mut success_count: i32 = 0;
+    let _batch: Vec<CardDetailsDb> = Vec::new();
+    let error_count: i32 = 0;
+    let success_count: i32 = 0;
 
     
 
